@@ -5,27 +5,43 @@
 
     <meta charset="UTF-8">
 
-    <title>Three.js Character Viewer</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>3D Character Showroom</title>
 
     <style>
 
+        html,
         body {
+
             margin: 0;
+
+            width: 100%;
+            height: 100%;
+
             overflow: hidden;
+
+            background: #222;
+
         }
 
         canvas {
+
             display: block;
+
         }
 
     </style>
 
 </head>
 
+
 <body>
 
 
-<!-- THREE.JS IMPORT MAP -->
+<!-- =========================================
+     THREE.JS IMPORT MAP
+========================================= -->
 
 <script type="importmap">
 
@@ -46,6 +62,7 @@
 
 <script type="module">
 
+
 import * as THREE from 'three';
 
 import { GLTFLoader } from
@@ -55,200 +72,203 @@ import { OrbitControls } from
 'three/addons/controls/OrbitControls.js';
 
 
-// ============================
+// =========================================
 // SCENE
-// ============================
+// =========================================
 
-const scene = new THREE.Scene();
+const scene =
+    new THREE.Scene();
 
 scene.background =
     new THREE.Color(0x222222);
 
 
-// ============================
+// =========================================
 // CAMERA
-// ============================
+// =========================================
 
 const camera =
     new THREE.PerspectiveCamera(
+
         45,
+
         window.innerWidth /
         window.innerHeight,
+
         0.1,
+
         100
+
     );
 
+
 camera.position.set(
+
     0,
     1.5,
     5
+
 );
 
 
-// ============================
+// =========================================
 // RENDERER
-// ============================
+// =========================================
 
 const renderer =
     new THREE.WebGLRenderer({
+
         antialias: true
+
     });
 
+
 renderer.setSize(
+
     window.innerWidth,
     window.innerHeight
+
 );
+
 
 renderer.setPixelRatio(
+
     Math.min(
+
         window.devicePixelRatio,
         2
+
     )
+
 );
+
 
 document.body.appendChild(
+
     renderer.domElement
+
 );
 
 
-// ============================
+// =========================================
 // LIGHTING
-// ============================
+// =========================================
+
+
+// Main soft light
 
 const hemiLight =
     new THREE.HemisphereLight(
+
         0xffffff,
         0x444444,
         3
+
     );
 
-scene.add(hemiLight);
+scene.add(
 
+    hemiLight
+
+);
+
+
+// Main directional light
 
 const directionalLight =
     new THREE.DirectionalLight(
+
         0xffffff,
         3
+
     );
 
+
 directionalLight.position.set(
+
     3,
     5,
     3
-);
 
-scene.add(directionalLight);
-
-
-// ============================
-// CHARACTER
-// ============================
-
-const loader =
-    new GLTFLoader();
-
-
-loader.load(
-    './character.glb',
-
-    (gltf) => {
-
-        const character = gltf.scene;
-
-        character.position.set(0, 0, 0);
-
-        scene.add(character);
-
-
-        // ============================
-        // FIND CHARACTER CENTER
-        // ============================
-
-        const box = new THREE.Box3().setFromObject(character);
-
-        const center = new THREE.Vector3();
-
-        box.getCenter(center);
-
-
-        // Make OrbitControls focus
-        // exactly on the character
-
-        controls.target.copy(center);
-
-
-        // Update controls
-
-        controls.update();
-
-
-        console.log("Character center:", center);
-
-    },
-
-    (progress) => {
-
-        if (progress.total > 0) {
-
-            console.log(
-                'Loading:',
-                (
-                    progress.loaded /
-                    progress.total *
-                    100
-                ).toFixed(1) + '%'
-            );
-
-        }
-
-    },
-
-    (error) => {
-
-        console.error(
-            'GLB ERROR:',
-            error
-        );
-
-    }
 );
 
 
-// ============================
-// ORBIT CONTROLS
-// ============================
+scene.add(
 
-const controls =
-    new OrbitControls(
-        camera,
-        renderer.domElement
+    directionalLight
+);
+
+
+// Additional fill light
+
+const fillLight =
+    new THREE.DirectionalLight(
+
+        0xffffff,
+        1.5
+
     );
 
 
-// Where the camera looks
-controls.target.set(
-    100,
-    10,
-    0
+fillLight.position.set(
+
+    -3,
+    2,
+    -3
+
 );
 
 
-// Smooth movement
+scene.add(
+
+    fillLight
+);
+
+
+// =========================================
+// ORBIT CONTROLS
+// =========================================
+
+const controls =
+    new OrbitControls(
+
+        camera,
+        renderer.domElement
+
+    );
+
+
+// Smooth camera movement
+
 controls.enableDamping = true;
 
-controls.dampingFactor = 0.08;
+controls.dampingFactor = 0.06;
 
 
 // Disable panning
+
 controls.enablePan = false;
 
 
+// Camera rotation speed
+
+controls.rotateSpeed = 0.5;
+
+
+// Zoom speed
+
+controls.zoomSpeed = 0.7;
+
+
 // Zoom limits
+
 controls.minDistance = 2;
+
 controls.maxDistance = 8;
 
 
-// Vertical rotation limits
+// Vertical camera limits
+
 controls.minPolarAngle =
     Math.PI * 0.2;
 
@@ -256,41 +276,303 @@ controls.maxPolarAngle =
     Math.PI * 0.8;
 
 
-// Rotation speed
-controls.rotateSpeed = 0.7;
+// =========================================
+// CHARACTER
+// =========================================
+
+let character = null;
 
 
-// Zoom speed
-controls.zoomSpeed = 0.8;
+// =========================================
+// AUTO ROTATION SETTINGS
+// =========================================
+
+const rotationSpeed = 0.5;
 
 
-// ============================
-// LOOP
-// ============================
+// =========================================
+// CLOCK
+// =========================================
+
+const clock =
+    new THREE.Clock();
+
+
+// =========================================
+// GLTF LOADER
+// =========================================
+
+const loader =
+    new GLTFLoader();
+
+
+loader.load(
+
+    './character.glb',
+
+
+    // =====================================
+    // SUCCESS
+    // =====================================
+
+    (gltf) => {
+
+
+        console.log(
+            'Character loaded!'
+        );
+
+
+        character =
+            gltf.scene;
+
+
+        // Character position
+
+        character.position.set(
+
+            0,
+            0,
+            0
+
+        );
+
+
+        // Character scale
+
+        character.scale.setScalar(
+
+            1
+
+        );
+
+
+        scene.add(
+
+            character
+
+        );
+
+
+        // =================================
+        // FIND CHARACTER CENTER
+        // =================================
+
+        const box = new THREE.Box3().setFromObject(character);
+
+        const center = new THREE.Vector3();
+        box.getCenter(center);
+
+        const size = new THREE.Vector3();
+        box.getSize(size);
+
+        // Aim around the upper-middle of the character
+        center.y = box.min.y + size.y * 0.55;
+        center.x = box.min.z + size.z * 0.5;
+
+        controls.target.copy(center);
+
+        controls.update();
+
+
+        controls.update();
+
+
+        console.log(
+
+            'Character center:',
+            center
+
+        );
+
+
+        console.log(
+
+            'Animations:',
+            gltf.animations.map(
+
+                animation =>
+                    animation.name
+
+            )
+
+        );
+
+    },
+
+
+    // =====================================
+    // LOADING PROGRESS
+    // =====================================
+
+    (progress) => {
+
+
+        if (
+
+            progress.total > 0
+
+        ) {
+
+
+            const percent =
+
+                (
+
+                    progress.loaded /
+                    progress.total
+
+                ) * 100;
+
+
+            console.log(
+
+                'Loading:',
+                percent.toFixed(1) + '%'
+
+            );
+
+        }
+
+    },
+
+
+    // =====================================
+    // ERROR
+    // =====================================
+
+    (error) => {
+
+
+        console.error(
+
+            'GLB ERROR:',
+            error
+
+        );
+
+    }
+
+);
+
+
+// =========================================
+// MOUSE INTERACTION
+// =========================================
+
+// We use this to know when the user
+// is manually controlling the camera.
+
+let userInteracting = false;
+
+
+// Mouse down
+
+renderer.domElement.addEventListener(
+
+    'pointerdown',
+
+    () => {
+
+        userInteracting = true;
+
+    }
+
+);
+
+
+// Mouse up
+
+window.addEventListener(
+
+    'pointerup',
+
+    () => {
+
+        userInteracting = false;
+
+    }
+
+);
+
+
+// =========================================
+// ANIMATION LOOP
+// =========================================
 
 function animate() {
 
-    requestAnimationFrame(animate);
+
+    requestAnimationFrame(
+
+        animate
+
+    );
+
+
+    // Time between frames
+
+    const delta =
+        clock.getDelta();
+
+
+    // =====================================
+    // AUTOMATIC SHOWROOM ROTATION
+    // =====================================
+
+    if (
+
+        character &&
+        !userInteracting
+
+    ) {
+
+
+        character.rotation.y +=
+
+            rotationSpeed * delta;
+
+
+    }
+
+
+    // =====================================
+    // UPDATE ORBIT CONTROLS
+    // =====================================
 
     controls.update();
 
+
+    // =====================================
+    // RENDER
+    // =====================================
+
     renderer.render(
+
         scene,
         camera
+
     );
+
 }
+
 
 animate();
 
-// ============================
+
+// =========================================
 // RESIZE
-// ============================
+// =========================================
 
 window.addEventListener(
+
     'resize',
+
     () => {
 
+
         camera.aspect =
+
             window.innerWidth /
             window.innerHeight;
 
@@ -299,14 +581,19 @@ window.addEventListener(
 
 
         renderer.setSize(
+
             window.innerWidth,
             window.innerHeight
+
         );
 
     }
+
 );
 
+
 </script>
+
 
 </body>
 
