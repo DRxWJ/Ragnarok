@@ -5,13 +5,17 @@
 
     <meta charset="UTF-8">
 
-    <title>Three.js Character</title>
+    <title>Three.js Character Viewer</title>
 
     <style>
 
         body {
             margin: 0;
             overflow: hidden;
+        }
+
+        canvas {
+            display: block;
         }
 
     </style>
@@ -42,13 +46,13 @@
 
 <script type="module">
 
-import { OrbitControls } from
-'three/addons/controls/OrbitControls.js';
-
 import * as THREE from 'three';
 
 import { GLTFLoader } from
 'three/addons/loaders/GLTFLoader.js';
+
+import { OrbitControls } from
+'three/addons/controls/OrbitControls.js';
 
 
 // ============================
@@ -108,7 +112,7 @@ document.body.appendChild(
 
 
 // ============================
-// LIGHT
+// LIGHTING
 // ============================
 
 const hemiLight =
@@ -137,96 +141,50 @@ scene.add(directionalLight);
 
 
 // ============================
-// GLB
+// CHARACTER
 // ============================
 
 const loader =
     new GLTFLoader();
 
-let mixer = null;
-
-const clock =
-    new THREE.Clock();
-
 
 loader.load(
-
     './character.glb',
 
     (gltf) => {
 
-        console.log(
-            'Character loaded!'
-        );
+        const character = gltf.scene;
 
-        console.log(
-            'Animations:',
-            gltf.animations
-        );
+        character.position.set(0, 0, 0);
+
+        scene.add(character);
 
 
-        const character =
-            gltf.scene;
+        // ============================
+        // FIND CHARACTER CENTER
+        // ============================
+
+        const box = new THREE.Box3().setFromObject(character);
+
+        const center = new THREE.Vector3();
+
+        box.getCenter(center);
 
 
-        character.position.set(
-            0,
-            0,
-            0
-        );
+        // Make OrbitControls focus
+        // exactly on the character
+
+        controls.target.copy(center);
 
 
-        character.scale.setScalar(
-            1
-        );
+        // Update controls
+
+        controls.update();
 
 
-        scene.add(
-            character
-        );
-
-
-        // ====================
-        // ANIMATION
-        // ====================
-
-        if (
-            gltf.animations.length > 0
-        ) {
-
-            mixer =
-                new THREE.AnimationMixer(
-                    character
-                );
-
-
-            const action =
-                mixer.clipAction(
-                    gltf.animations[0]
-                );
-
-
-            action.play();
-
-
-            console.log(
-                'Playing:',
-                gltf.animations[0].name
-            );
-
-        }
-        else {
-
-            console.log(
-                'No animations found.'
-            );
-
-        }
+        console.log("Character center:", center);
 
     },
-
-
-    // Loading progress
 
     (progress) => {
 
@@ -245,9 +203,6 @@ loader.load(
 
     },
 
-
-    // Error
-
     (error) => {
 
         console.error(
@@ -256,58 +211,76 @@ loader.load(
         );
 
     }
-
 );
 
-const controls = new OrbitControls(
-    camera,
-    renderer.domElement
+
+// ============================
+// ORBIT CONTROLS
+// ============================
+
+const controls =
+    new OrbitControls(
+        camera,
+        renderer.domElement
+    );
+
+
+// Where the camera looks
+controls.target.set(
+    100,
+    10,
+    0
 );
 
-controls.target.set(0, 1, 0);
 
+// Smooth movement
 controls.enableDamping = true;
 
+controls.dampingFactor = 0.08;
+
+
+// Disable panning
 controls.enablePan = false;
 
+
+// Zoom limits
 controls.minDistance = 2;
 controls.maxDistance = 8;
 
-controls.minPolarAngle = Math.PI * 0.2;
-controls.maxPolarAngle = Math.PI * 0.8;
+
+// Vertical rotation limits
+controls.minPolarAngle =
+    Math.PI * 0.2;
+
+controls.maxPolarAngle =
+    Math.PI * 0.8;
+
+
+// Rotation speed
+controls.rotateSpeed = 0.7;
+
+
+// Zoom speed
+controls.zoomSpeed = 0.8;
+
+
 // ============================
 // LOOP
 // ============================
 
 function animate() {
 
-    requestAnimationFrame(
-        animate
-    );
+    requestAnimationFrame(animate);
 
-
-    const delta =
-        clock.getDelta();
-
-
-    if (mixer) {
-
-        mixer.update(
-            delta
-        );
-
-    }
-
+    controls.update();
 
     renderer.render(
         scene,
         camera
     );
-
 }
 
 animate();
-
 
 // ============================
 // RESIZE
