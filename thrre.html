@@ -19,7 +19,6 @@
             width: 100%;
             height: 100%;
 
-            overflow: hidden;
 
             background: #222;
 
@@ -104,7 +103,7 @@ const camera =
 
 camera.position.set(
 
-    0,
+    3,
     1.5,
     5
 
@@ -125,8 +124,8 @@ const renderer =
 
 renderer.setSize(
 
-    window.innerWidth,
-    window.innerHeight
+    window.innerWidth/2,
+    window.innerHeight/2
 
 );
 
@@ -582,8 +581,8 @@ window.addEventListener(
 
         renderer.setSize(
 
-            window.innerWidth,
-            window.innerHeight
+            window.innerWidth/2,
+            window.innerHeight/2
 
         );
 
