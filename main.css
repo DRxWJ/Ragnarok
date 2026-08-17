@@ -102,6 +102,6 @@ body{
 .txt p{
     font-family: var(--font1);
     font-weight: 300;
-    font-size: 20px;
+    font-size: 5vw;
     padding-left: 20px;
 }
