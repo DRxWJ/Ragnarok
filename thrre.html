@@ -104,8 +104,8 @@ const camera =
 camera.position.set(
 
     3,
-    1.5,
-    5
+    3,
+    7
 
 );
 
@@ -307,7 +307,7 @@ const loader =
 
 loader.load(
 
-    './character.glb',
+    './test.glb',
 
 
     // =====================================
@@ -366,8 +366,8 @@ loader.load(
         box.getSize(size);
 
         // Aim around the upper-middle of the character
-        center.y = box.min.y + size.y * 0.55;
-        center.x = box.min.z + size.z * 0.5;
+        center.y = box.min.y + size.y * 0.47;
+        center.x = box.min.x + size.x * 0.5;
 
         controls.target.copy(center);
 
